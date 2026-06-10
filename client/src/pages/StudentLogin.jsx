@@ -2,12 +2,21 @@ import React, { useState, useEffect } from 'react';
 import { api } from '../lib/api.js';
 
 export default function StudentLogin({ onLogin }) {
-  const [courses, setCourses]     = useState([]);
-  const [form, setForm]           = useState({ student_number: '', course_id: '', password: '' });
-  const [err, setErr]             = useState('');
-  const [busy, setBusy]           = useState(false);
-  const [showPw, setShowPw]       = useState(false);
-  const [mounted, setMounted]     = useState(false);
+  const [view, setView] = useState('login'); // 'login' | 'reset-request' | 'reset-verify'
+
+  if (view === 'reset-request') return <ResetRequest onVerify={() => setView('reset-verify')} onBack={() => setView('login')} />;
+  if (view === 'reset-verify')  return <ResetVerify  onDone={() => setView('login')}           onBack={() => setView('reset-request')} />;
+  return <LoginForm onLogin={onLogin} onForgot={() => setView('reset-request')} />;
+}
+
+/* ── Login form ── */
+function LoginForm({ onLogin, onForgot }) {
+  const [courses, setCourses] = useState([]);
+  const [form, setForm]       = useState({ student_number: '', course_id: '', password: '' });
+  const [err, setErr]         = useState('');
+  const [busy, setBusy]       = useState(false);
+  const [showPw, setShowPw]   = useState(false);
+  const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
     api('/courses/active').then(setCourses).catch(() => {});
@@ -23,6 +32,11 @@ export default function StudentLogin({ onLogin }) {
       const me = await api('/auth/me');
       onLogin({ ...me, forcePasswordChange });
     } catch (ex) { setErr(ex.message); } finally { setBusy(false); }
+  }
+
+  function semesterLabel(c) {
+    const sl = c.semester_label || String(c.semester_number);
+    return { '1': 'S1', '2': 'S2', 'Y': 'Year Round', 'AA': 'Always' }[sl] || sl;
   }
 
   return (
@@ -47,7 +61,7 @@ export default function StudentLogin({ onLogin }) {
             <label style={s.label}>Course</label>
             <select style={s.input} value={form.course_id} onChange={set('course_id')} required>
               <option value="">— Select your course —</option>
-              {courses.map(c => <option key={c.id} value={c.id}>{c.code} — {c.name} ({c.year} S{c.semester_number})</option>)}
+              {courses.map(c => <option key={c.id} value={c.id}>{c.code} — {c.name} ({c.year} {semesterLabel(c)})</option>)}
             </select>
           </div>
           <div style={s.field}>
@@ -63,13 +77,153 @@ export default function StudentLogin({ onLogin }) {
           </button>
         </form>
 
-        <p style={s.forgot}>Forgot password? Contact your lecturer.</p>
+        <p style={s.forgot}>
+          <button style={s.forgotLink} onClick={onForgot}>Forgot password?</button>
+        </p>
         <p style={s.footer}>Private portal &mdash; contact your lecturer for access</p>
       </div>
     </div>
   );
 }
 
+/* ── Reset step 1: enter student number ── */
+function ResetRequest({ onVerify, onBack }) {
+  const [studentNumber, setStudentNumber] = useState('');
+  const [busy, setBusy]   = useState(false);
+  const [err, setErr]     = useState('');
+  const [sent, setSent]   = useState(false);
+  const [email, setEmail] = useState('');
+
+  async function submit(e) {
+    e.preventDefault(); setErr(''); setBusy(true);
+    try {
+      const d = await api('/auth/student/reset-request', { method: 'POST', body: { student_number: studentNumber } });
+      setEmail(d.email || `${studentNumber}@ufh.ac.za`);
+      setSent(true);
+    } catch (ex) { setErr(ex.message); } finally { setBusy(false); }
+  }
+
+  if (sent) {
+    return (
+      <div style={s.page}>
+        <div style={s.bg} />
+        <div style={{ ...s.card, maxWidth: 440, opacity: 1 }}>
+          <img src="/lsport-white.png" alt="LS Port" style={{ height: 36, marginBottom: 20 }} />
+          <div style={{ fontSize: '2rem', marginBottom: 12 }}>📧</div>
+          <h2 style={s.heading}>Code Sent</h2>
+          <p style={{ color: '#6b7280', fontSize: '0.88rem', lineHeight: 1.6, margin: '8px 0 24px' }}>
+            A 6-digit reset code was sent to <strong style={{ color: '#1F2937' }}>{email}</strong>.
+            Check your inbox and enter the code on the next screen. It expires in 10 minutes.
+          </p>
+          <button style={s.submitBtn} onClick={onVerify}>Enter Code →</button>
+          <p style={s.forgot}><button style={s.forgotLink} onClick={onBack}>← Back to sign in</button></p>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div style={s.page}>
+      <div style={s.bg} />
+      <div style={{ ...s.card, maxWidth: 440, opacity: 1 }}>
+        <img src="/lsport-white.png" alt="LS Port" style={{ height: 36, marginBottom: 20 }} />
+        <h2 style={s.heading}>Reset Password</h2>
+        <p style={s.sub}>Enter your student number. We'll email a reset code to your UFH address.</p>
+        {err && <div style={{ ...s.errorBox, marginTop: 14 }}><ErrIcon /> {err}</div>}
+        <form onSubmit={submit} style={{ marginTop: 20 }}>
+          <div style={s.field}>
+            <label style={s.label}>Student Number</label>
+            <input style={s.input} type="text" placeholder="e.g. 201900123" value={studentNumber} onChange={e => setStudentNumber(e.target.value)} autoFocus required />
+          </div>
+          <button style={s.submitBtn} disabled={busy || !studentNumber}>
+            {busy ? <><Spinner /> Sending…</> : <>Send Code <ArrowIcon /></>}
+          </button>
+        </form>
+        <p style={s.forgot}><button style={s.forgotLink} onClick={onBack}>← Back to sign in</button></p>
+      </div>
+    </div>
+  );
+}
+
+/* ── Reset step 2: enter OTP + new password ── */
+function ResetVerify({ onDone, onBack }) {
+  const [form, setForm]   = useState({ student_number: '', otp: '', new_password: '', confirm: '' });
+  const [busy, setBusy]   = useState(false);
+  const [err, setErr]     = useState('');
+  const [done, setDone]   = useState(false);
+  const [showPw, setShowPw] = useState(false);
+  const set = k => e => setForm(f => ({ ...f, [k]: e.target.value }));
+
+  async function submit(e) {
+    e.preventDefault(); setErr('');
+    if (form.new_password !== form.confirm) return setErr('Passwords do not match');
+    setBusy(true);
+    try {
+      await api('/auth/student/reset-verify', { method: 'POST', body: { student_number: form.student_number, otp: form.otp, new_password: form.new_password } });
+      setDone(true);
+    } catch (ex) { setErr(ex.message); } finally { setBusy(false); }
+  }
+
+  if (done) {
+    return (
+      <div style={s.page}>
+        <div style={s.bg} />
+        <div style={{ ...s.card, maxWidth: 440, opacity: 1, textAlign: 'center' }}>
+          <img src="/lsport-white.png" alt="LS Port" style={{ height: 36, marginBottom: 20 }} />
+          <div style={{ fontSize: '2rem', marginBottom: 12 }}>✅</div>
+          <h2 style={s.heading}>Password Reset</h2>
+          <p style={{ color: '#6b7280', fontSize: '0.88rem', lineHeight: 1.6, margin: '8px 0 24px' }}>
+            Your password has been updated. You can now sign in with your new password.
+          </p>
+          <button style={s.submitBtn} onClick={onDone}>Sign in →</button>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div style={s.page}>
+      <div style={s.bg} />
+      <div style={{ ...s.card, maxWidth: 440, opacity: 1 }}>
+        <img src="/lsport-white.png" alt="LS Port" style={{ height: 36, marginBottom: 20 }} />
+        <h2 style={s.heading}>Enter Reset Code</h2>
+        <p style={s.sub}>Enter the 6-digit code from your email and choose a new password.</p>
+        {err && <div style={{ ...s.errorBox, marginTop: 14 }}><ErrIcon /> {err}</div>}
+        <form onSubmit={submit} style={{ marginTop: 20 }}>
+          <div style={s.field}>
+            <label style={s.label}>Student Number</label>
+            <input style={s.input} type="text" placeholder="e.g. 201900123" value={form.student_number} onChange={set('student_number')} autoFocus required />
+          </div>
+          <div style={s.field}>
+            <label style={s.label}>Reset Code</label>
+            <input
+              style={{ ...s.input, fontFamily: 'monospace', fontSize: '1.4rem', letterSpacing: '0.2em', textAlign: 'center' }}
+              type="text" inputMode="numeric" maxLength={6} placeholder="000000"
+              value={form.otp} onChange={set('otp')} required
+            />
+          </div>
+          <div style={s.field}>
+            <label style={s.label}>New Password</label>
+            <div style={{ position: 'relative' }}>
+              <input style={{ ...s.input, paddingRight: 44 }} type={showPw ? 'text' : 'password'} placeholder="At least 8 characters" value={form.new_password} onChange={set('new_password')} required />
+              <button type="button" style={s.eyeBtn} onClick={() => setShowPw(v => !v)} tabIndex={-1}><EyeIcon open={showPw} /></button>
+            </div>
+          </div>
+          <div style={s.field}>
+            <label style={s.label}>Confirm New Password</label>
+            <input style={s.input} type={showPw ? 'text' : 'password'} placeholder="Repeat password" value={form.confirm} onChange={set('confirm')} required />
+          </div>
+          <button style={s.submitBtn} disabled={busy}>
+            {busy ? <><Spinner /> Resetting…</> : <>Set New Password <ArrowIcon /></>}
+          </button>
+        </form>
+        <p style={s.forgot}><button style={s.forgotLink} onClick={onBack}>← Request a new code</button></p>
+      </div>
+    </div>
+  );
+}
+
+/* ── Icons ── */
 function ErrIcon() { return <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>; }
 function EyeIcon({ open }) {
   return open
@@ -96,5 +250,6 @@ const s = {
   hint:     { fontSize: '0.8rem', color: '#9ca3af', margin: '-4px 0 16px', lineHeight: 1.5 },
   submitBtn:{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, width: '100%', padding: 13, background: 'linear-gradient(90deg,#FA7921,#e06010)', color: '#fff', border: 'none', borderRadius: 10, fontFamily: "'Poppins',sans-serif", fontWeight: 700, fontSize: '0.96rem', cursor: 'pointer', boxShadow: '0 4px 18px rgba(250,121,33,0.4)' },
   forgot:   { textAlign: 'center', color: '#9ca3af', fontSize: '0.8rem', marginTop: 20, marginBottom: 0 },
+  forgotLink: { background: 'none', border: 'none', color: '#FA7921', fontSize: '0.8rem', cursor: 'pointer', fontFamily: 'inherit', textDecoration: 'underline', padding: 0 },
   footer:   { textAlign: 'center', color: '#d1d5db', fontSize: '0.7rem', marginTop: 10, marginBottom: 0 },
 };

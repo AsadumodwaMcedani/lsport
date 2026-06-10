@@ -3,12 +3,14 @@ import bcrypt from 'bcrypt';
 import rateLimit from 'express-rate-limit';
 import { db, logAudit } from '../config/db.js';
 import { issueToken, setAuthCookie, requireAuth, requireRole } from '../middleware/auth.js';
+import { sendOtpEmail } from '../config/mail.js';
 
 const router = Router();
 const fail = (res, code, msg, status = 400) => res.status(status).json({ ok: false, error: { code, message: msg } });
 
-const adminLimiter = rateLimit({ windowMs: 15 * 60 * 1000, max: 5, standardHeaders: true, message: { ok: false, error: { code: 'RATE_LIMITED', message: 'Too many attempts. Try again in 15 minutes.' } } });
+const adminLimiter  = rateLimit({ windowMs: 15 * 60 * 1000, max: 5,  standardHeaders: true, message: { ok: false, error: { code: 'RATE_LIMITED', message: 'Too many attempts. Try again in 15 minutes.' } } });
 const portalLimiter = rateLimit({ windowMs: 15 * 60 * 1000, max: 10, standardHeaders: true, message: { ok: false, error: { code: 'RATE_LIMITED', message: 'Too many attempts. Try again in 15 minutes.' } } });
+const otpLimiter    = rateLimit({ windowMs: 15 * 60 * 1000, max: 3,  standardHeaders: true, message: { ok: false, error: { code: 'RATE_LIMITED', message: 'Too many reset attempts. Try again in 15 minutes.' } } });
 
 // Super admin: email + password from .env (Decision #4: no TOTP in v1)
 router.post('/admin/login', adminLimiter, async (req, res) => {
@@ -114,6 +116,61 @@ router.post('/student/consent', requireAuth, requireRole('student'), async (req,
   });
   await logAudit(req.user.sub, 'student.consent_given', 'student', req.user.sub, null, req.ip);
   res.json({ ok: true, data: { consented: true } });
+});
+
+// Student password reset — step 1: request OTP
+router.post('/student/reset-request', otpLimiter, async (req, res, next) => {
+  const { student_number } = req.body || {};
+  if (!student_number) return fail(res, 'MISSING_FIELDS', 'Student number required');
+  try {
+    const student = await db('students').where({ student_number, is_active: 1 }).first();
+    // Return the same response whether found or not (prevents student-number enumeration)
+    if (student) {
+      const otp = String(Math.floor(100000 + Math.random() * 900000));
+      const otp_hash = await bcrypt.hash(otp, 10);
+      const expires_at = new Date(Date.now() + 10 * 60 * 1000);
+
+      // Invalidate any previous unused OTPs for this student
+      await db('password_otps').where({ student_number, used: false }).update({ used: true });
+
+      await db('password_otps').insert({ student_number, otp_hash, expires_at, used: false });
+      await sendOtpEmail(student_number, otp).catch(err => {
+        console.error('OTP email failed:', err.message);
+      });
+      await logAudit(student.id, 'auth.otp_requested', 'student', student.id, null, req.ip);
+    }
+    res.json({ ok: true, data: { sent: true, email: `${student_number}@ufh.ac.za` } });
+  } catch (err) { next(err); }
+});
+
+// Student password reset — step 2: verify OTP + set new password
+router.post('/student/reset-verify', otpLimiter, async (req, res, next) => {
+  const { student_number, otp, new_password } = req.body || {};
+  if (!student_number || !otp || !new_password) return fail(res, 'MISSING_FIELDS', 'Student number, OTP and new password required');
+  if (new_password.length < 8) return fail(res, 'WEAK_PASSWORD', 'Password must be at least 8 characters');
+  try {
+    const now = new Date();
+    const record = await db('password_otps')
+      .where({ student_number, used: false })
+      .where('expires_at', '>', now)
+      .orderBy('created_at', 'desc')
+      .first();
+
+    if (!record || !(await bcrypt.compare(otp, record.otp_hash))) {
+      return fail(res, 'INVALID_OTP', 'Invalid or expired code. Please request a new one.', 401);
+    }
+
+    const student = await db('students').where({ student_number, is_active: 1 }).first();
+    if (!student) return fail(res, 'NOT_FOUND', 'Account not found', 404);
+
+    await db('password_otps').where({ id: record.id }).update({ used: true });
+    await db('students').where({ id: student.id }).update({
+      password_hash: await bcrypt.hash(new_password, 12),
+      force_pw_change: 0,
+    });
+    await logAudit(student.id, 'auth.password_reset', 'student', student.id, null, req.ip);
+    res.json({ ok: true, data: { reset: true } });
+  } catch (err) { next(err); }
 });
 
 router.post('/logout', (req, res) => { res.clearCookie('ls_token'); res.json({ ok: true, data: {} }); });
