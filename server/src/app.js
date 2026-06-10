@@ -4,6 +4,8 @@ import cookieParser from 'cookie-parser';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import authRoutes from './routes/auth.js';
+import courseRoutes from './routes/courses.js';
+import studentRoutes from './routes/students.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -22,6 +24,8 @@ export function createApp() {
 
   app.get('/api/v1/health', (_req, res) => res.json({ ok: true, data: { status: 'up', ts: new Date().toISOString() } }));
   app.use('/api/v1/auth', authRoutes);
+  app.use('/api/v1/courses', courseRoutes);
+  app.use('/api/v1/students', studentRoutes);
 
   // Serve built SPA (client/dist) for non-API routes
   const dist = path.resolve(__dirname, '../../client/dist');

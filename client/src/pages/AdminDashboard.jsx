@@ -1,5 +1,7 @@
 import React, { useState } from 'react';
 import { api } from '../lib/api.js';
+import CoursesPage from './CoursesPage.jsx';
+import StudentsPage from './StudentsPage.jsx';
 
 const NAV = [
   { group: 'Overview',    items: [{ id: 'Dashboard', icon: <Grid /> }] },
@@ -77,8 +79,10 @@ export default function AdminDashboard({ user, onLogout }) {
 
         {/* content */}
         <div style={s.content}>
-          {active === 'Dashboard' && <DashboardHome user={user} />}
-          {active !== 'Dashboard' && (
+          {active === 'Dashboard'  && <DashboardHome user={user} />}
+          {active === 'Courses'    && <CoursesPage />}
+          {active === 'Students'   && <StudentsPage />}
+          {active !== 'Dashboard' && active !== 'Courses' && active !== 'Students' && (
             <div style={s.placeholder}>
               <div style={s.placeholderIcon}>{NAV.flatMap(g => g.items).find(i => i.id === active)?.icon}</div>
               <h3 style={{ color: '#6b7280', fontFamily: "'Poppins',sans-serif", margin: '12px 0 6px' }}>{active}</h3>
