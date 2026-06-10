@@ -1,0 +1,1 @@
+I will paste an error or describe broken behaviour. Locate the cause by reading only the relevant files, propose the fix in one sentence, apply it, add/adjust a test that would have caught it, run tests, and report.

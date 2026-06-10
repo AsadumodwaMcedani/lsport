@@ -1,0 +1,1 @@
+Phase completion checklist: 1) all phase deliverables in memory/ROADMAP.md ticked in PROGRESS.md; 2) tests pass; 3) merge dev into main; 4) tag v1.0-phaseN and push tags; 5) print the deploy command for the server; 6) after I confirm deployment succeeded, append a row to memory/DEPLOY_LOG.md and update PROGRESS.md phase table.

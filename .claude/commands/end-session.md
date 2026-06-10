@@ -1,0 +1,1 @@
+Wrap up the session: 1) run server tests (cd server && npm test); 2) update memory/PROGRESS.md (tick completed items, set "Next session" line); 3) append any new decisions to memory/DECISIONS.md and issues to memory/ISSUES.md; 4) git add -A, commit with "phaseN: <summary>", push to origin dev. Report what was committed.

@@ -1,0 +1,1 @@
+Read CLAUDE.md, memory/PROGRESS.md, and memory/ISSUES.md. Summarise in 3 lines: current phase, last completed item, the next task. Then ask which task to do (default = "Next session" line in PROGRESS.md). Do NOT read docs/SPEC.md yet — only the section relevant to the chosen task, located via docs/SPEC_INDEX.md.
