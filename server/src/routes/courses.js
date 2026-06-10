@@ -21,15 +21,18 @@ const upload = multer({
 
 // ── helpers ───────────────────────────────────────────────────────────────────
 
-async function ensureYearSemester(year, semesterNumber) {
+const LABEL_TO_NUM = { '1': 1, '2': 2, 'Y': 3, 'AA': 4 };
+
+async function ensureYearSemester(year, semesterLabel) {
+  const semNum = LABEL_TO_NUM[semesterLabel] ?? 1;
   let ay = await db('academic_years').where({ year }).first();
   if (!ay) {
     const [id] = await db('academic_years').insert({ year, is_active: true });
     ay = { id };
   }
-  let sem = await db('semesters').where({ academic_year_id: ay.id, semester_number: semesterNumber }).first();
+  let sem = await db('semesters').where({ academic_year_id: ay.id, semester_number: semNum }).first();
   if (!sem) {
-    const [id] = await db('semesters').insert({ academic_year_id: ay.id, semester_number: semesterNumber, is_active: true });
+    const [id] = await db('semesters').insert({ academic_year_id: ay.id, semester_number: semNum, label: semesterLabel, is_active: true });
     sem = { id };
   }
   return { academicYear: ay, semester: sem };
@@ -37,14 +40,14 @@ async function ensureYearSemester(year, semesterNumber) {
 
 function autoMap(headers) {
   const patterns = {
-    surname:       /sur.?name|last.?name|family/i,
-    names:         /^(first.?)?names?$|given|forename/i,
-    student_number:/student.?no|student.?num|stud.?no|s\.?no/i,
-    id_number:     /id.?no|id.?num|identity|id.?number/i,
-    email:         /e.?mail/i,
-    phone:         /phone|cell|mobile|contact.?no/i,
-    course_name:   /course.?name|module.?name/i,
-    qualification: /qualif|program|degree/i,
+    surname:        /sur.?name|last.?name|family/i,
+    names:          /^(first.?)?names?$|given|forename/i,
+    student_number: /student.?no|student.?num|stud.?no|s\.?no/i,
+    id_number:      /id.?no|id.?num|identity|id.?number/i,
+    email:          /e.?mail/i,
+    phone:          /phone|cell|mobile|contact.?no/i,
+    course_name:    /course.?name|module.?name/i,
+    qualification:  /qualif|program|degree/i,
   };
   const map = {};
   headers.forEach((h, i) => {
@@ -55,6 +58,8 @@ function autoMap(headers) {
   return map;
 }
 
+const semLabel = (row) => row.semester_label || String(row.semester_number);
+
 // ── Public: active courses for student login dropdown ─────────────────────────
 
 router.get('/active', async (_req, res, next) => {
@@ -64,7 +69,11 @@ router.get('/active', async (_req, res, next) => {
       .join('academic_years as ay', 'ay.id', 's.academic_year_id')
       .where('c.is_active', true)
       .orderBy([{ column: 'ay.year', order: 'desc' }, { column: 's.semester_number' }, { column: 'c.code' }])
-      .select('c.id', 'c.code', 'c.name', 'ay.year', 's.semester_number');
+      .select(
+        'c.id', 'c.code', 'c.name', 'ay.year', 's.semester_number',
+        db.raw("COALESCE(s.label, CAST(s.semester_number AS CHAR)) as semester_label"),
+        'c.course_provider',
+      );
     res.json({ ok: true, data: courses });
   } catch (err) { next(err); }
 });
@@ -81,7 +90,8 @@ router.get('/', requireAuth, requireRole('super_admin'), async (_req, res, next)
         'c.id', 'c.code', 'c.name', 'c.description', 'c.is_active',
         'c.delivery_type', 'c.course_provider', 'c.course_provider_other',
         'ay.year', 's.semester_number',
-        db.raw('(SELECT COUNT(*) FROM course_enrollments ce WHERE ce.course_id = c.id) as enrolled_count')
+        db.raw("COALESCE(s.label, CAST(s.semester_number AS CHAR)) as semester_label"),
+        db.raw('(SELECT COUNT(*) FROM course_enrollments ce WHERE ce.course_id = c.id) as enrolled_count'),
       );
     res.json({ ok: true, data: courses });
   } catch (err) { next(err); }
@@ -91,11 +101,13 @@ router.get('/', requireAuth, requireRole('super_admin'), async (_req, res, next)
 
 router.post('/', requireAuth, requireRole('super_admin'), async (req, res, next) => {
   try {
-    const { code, name, year, semester_number, description, delivery_type, course_provider, course_provider_other } = req.body || {};
-    if (!code || !name || !year || !semester_number) return fail(res, 'MISSING_FIELDS', 'code, name, year and semester_number required');
+    const { code, name, year, semester_label, semester_number, description, delivery_type, course_provider, course_provider_other } = req.body || {};
+    if (!code || !name || !year) return fail(res, 'MISSING_FIELDS', 'code, name and year required');
+    const sl = semester_label || (semester_number ? String(semester_number) : null);
+    if (!sl || !LABEL_TO_NUM[sl]) return fail(res, 'MISSING_FIELDS', 'semester_label required — must be 1, 2, Y, or AA');
     if (course_provider === 'other' && !course_provider_other?.trim()) return fail(res, 'MISSING_FIELDS', 'Specify the course provider');
 
-    const { semester } = await ensureYearSemester(parseInt(year), parseInt(semester_number));
+    const { semester } = await ensureYearSemester(parseInt(year), sl);
     const existing = await db('courses').where({ code: code.toUpperCase(), semester_id: semester.id }).first();
     if (existing) return fail(res, 'DUPLICATE', `Course ${code.toUpperCase()} already exists in this semester`);
 
@@ -163,10 +175,16 @@ router.post('/:id/upload/import', requireAuth, requireRole('super_admin'), uploa
   const courseId = parseInt(req.params.id);
   try {
     const course = await db('courses').where({ id: courseId }).first();
-    if (!course) { if (req.file) await fs.unlink(req.file.path).catch(() => {}); return fail(res, 'NOT_FOUND', 'Course not found', 404); }
+    if (!course) {
+      if (req.file) await fs.unlink(req.file.path).catch(() => {});
+      return fail(res, 'NOT_FOUND', 'Course not found', 404);
+    }
 
     let mapping;
     try { mapping = JSON.parse(req.body.column_map || '{}'); } catch { return fail(res, 'BAD_MAPPING', 'column_map must be valid JSON'); }
+
+    const mode      = req.body.mode       || 'new_import'; // 'new_import' | 'update_only'
+    const autoEmail = req.body.auto_email || '';           // 'ufh' | ''
 
     const filePath = req.file?.path;
     if (!filePath) return fail(res, 'NO_FILE', 'No file provided');
@@ -181,28 +199,53 @@ router.post('/:id/upload/import', requireAuth, requireRole('super_admin'), uploa
       return String(row.getCell(idx + 1).value ?? '').trim();
     };
 
-    let created = 0, updated = 0;
-    const errors = [];
+    let total = 0, created = 0, updated = 0;
+    const skipped = [], errors = [];
 
     for (let r = 2; r <= ws.rowCount; r++) {
       const row = ws.getRow(r);
+
+      // skip entirely blank rows (don't count toward total)
+      let hasData = false;
+      row.eachCell({ includeEmpty: false }, () => { hasData = true; });
+      if (!hasData) continue;
+
+      total++;
       const studentNumber = get(row, 'student_number');
-      const surname = get(row, 'surname');
-      const names = get(row, 'names');
-      if (!studentNumber || !surname || !names) continue;
+
+      if (!studentNumber) {
+        skipped.push({ row: r, student_number: '(blank)', reason: 'No student number in this row' });
+        continue;
+      }
 
       try {
         const existing = await db('students').where({ student_number: studentNumber }).first();
+
+        if (mode === 'update_only' && !existing) {
+          skipped.push({ row: r, student_number: studentNumber, reason: 'Student number not found in system' });
+          continue;
+        }
+
+        // resolve email
+        const rawEmail = get(row, 'email');
+        const resolvedEmail = rawEmail || (autoEmail === 'ufh' ? `${studentNumber}@ufh.ac.za` : null);
+
         let studentId;
+
         if (existing) {
-          await db('students').where({ id: existing.id }).update({
-            surname, names,
-            id_number:     get(row, 'id_number')    || existing.id_number,
-            email:         get(row, 'email')         || existing.email,
-            phone:         get(row, 'phone')         || existing.phone,
-            course_name:   get(row, 'course_name')   || existing.course_name,
-            qualification: get(row, 'qualification') || existing.qualification,
-          });
+          // only update fields that are mapped and have a value in this row
+          const updates = {};
+          const setIfPresent = (field, col) => { const v = get(row, field); if (v) updates[col || field] = v; };
+          setIfPresent('surname');
+          setIfPresent('names');
+          setIfPresent('id_number');
+          setIfPresent('phone');
+          setIfPresent('course_name');
+          setIfPresent('qualification');
+          if (resolvedEmail) updates.email = resolvedEmail;
+          if (Object.keys(updates).length > 0) {
+            await db('students').where({ id: existing.id }).update(updates);
+          }
           studentId = existing.id;
           updated++;
         } else {
@@ -210,9 +253,11 @@ router.post('/:id/upload/import', requireAuth, requireRole('super_admin'), uploa
           const hash = await bcrypt.hash(initialPw, 10);
           const expiresAt = new Date(); expiresAt.setMonth(expiresAt.getMonth() + 13);
           [studentId] = await db('students').insert({
-            student_number: studentNumber, surname, names,
-            id_number:     get(row, 'id_number')    || null,
-            email:         get(row, 'email')         || null,
+            student_number: studentNumber,
+            surname:       get(row, 'surname')       || '',
+            names:         get(row, 'names')         || '',
+            id_number:     get(row, 'id_number')     || null,
+            email:         resolvedEmail              || null,
             phone:         get(row, 'phone')         || null,
             course_name:   get(row, 'course_name')   || null,
             qualification: get(row, 'qualification') || null,
@@ -221,17 +266,20 @@ router.post('/:id/upload/import', requireAuth, requireRole('super_admin'), uploa
           });
           created++;
         }
+
         await db('course_enrollments')
           .insert({ student_id: studentId, course_id: courseId })
           .onConflict(['student_id', 'course_id']).ignore();
+
       } catch (rowErr) {
         errors.push({ row: r, student_number: studentNumber, error: rowErr.message });
       }
     }
 
     await fs.unlink(filePath).catch(() => {});
-    await logAudit(req.user.sub, 'students.imported', 'course', courseId, { created, updated, errors: errors.length });
-    res.json({ ok: true, data: { created, updated, errors } });
+    await logAudit(req.user.sub, 'students.imported', 'course', courseId, { mode, total, created, updated, skipped: skipped.length, errors: errors.length });
+    res.json({ ok: true, data: { total, created, updated, skipped, errors } });
+
   } catch (err) {
     if (req.file) await fs.unlink(req.file.path).catch(() => {});
     next(err);
