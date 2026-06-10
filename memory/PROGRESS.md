@@ -51,7 +51,12 @@
 - [x] Import: returns { total, created, updated, skipped[], errors[] } — full detail
 - [x] Semester options: 1 (S1), 2 (S2), Y (Year Round), AA (Always Available)
 - [x] Course list displays semester label (S1/S2/Year/Always)
+- [x] Migration 006: password_otps.student_number widened to VARCHAR(30)
+- [x] server/src/config/mail.js — Nodemailer transport + sendOtpEmail helper (HTML + text)
+- [x] POST /auth/student/reset-request — 6-digit OTP, bcrypt-hashed, stored in password_otps, emailed to {studentnumber}@ufh.ac.za, 10-min expiry, rate-limited 3/15min
+- [x] POST /auth/student/reset-verify — validates OTP, resets password, marks OTP used
+- [x] StudentLogin.jsx: "Forgot password?" link opens 2-step reset flow (request → verify → done); semester label fix in course dropdown
 - [ ] PM2 + OpenLiteSpeed proxy configured on server
 - [ ] First deploy
 
-## Next session: deploy Phase 1+2 to production server (SSH → PM2 + OLS proxy), then test live import.
+## Next session: Phase 2 is feature-complete. Deploy to production (SSH → PM2 + OLS proxy + run migrations + smoke test).
