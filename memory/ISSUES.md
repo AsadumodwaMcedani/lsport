@@ -12,6 +12,7 @@
 - A-002: All students have a working {studentnumber}@ufh.ac.za mailbox.
 - A-003: MariaDB user with full rights on `lbbs_prod` can be created via DirectAdmin.
 - A-004: Class lists arrive as .xlsx with header row (spec §12.2).
+- A-005: student_number values may be longer than 20 chars (widened to 30 in migration 005; flag if 30 is still too short).
 
 ## Resolved
 - I-004: ✅ 2026-06-10 — GitHub repo created (AsadumodwaMcedani/lsport) and initial push completed.

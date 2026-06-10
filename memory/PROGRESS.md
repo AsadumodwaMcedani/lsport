@@ -41,7 +41,17 @@
 - [x] Student portal: StudentLogin page (student number + course dropdown + password)
 - [x] Student portal: StudentDashboard (with forced-pw-change screen)
 - [x] App.jsx surface routing (?portal=student for local dev testing)
+- [x] DB migration 003: courses — delivery_type, course_provider; student_consents table
+- [x] Migration 004: semesters — add label VARCHAR(5), backfill '1'/'2', supports Y/AA
+- [x] Migration 005: students — widen student_number to VARCHAR(30), id_number to VARCHAR(50)
+- [x] Import: detailed skip tracking (row, student_number, reason per skipped row)
+- [x] Import: only student_number required; surname/names optional (empty string default)
+- [x] Import: Update Students mode — matches by student_number, skips non-matching with reason
+- [x] Import: auto-generate UFH emails (studentnumber@ufh.ac.za) when email not mapped and course is UFH
+- [x] Import: returns { total, created, updated, skipped[], errors[] } — full detail
+- [x] Semester options: 1 (S1), 2 (S2), Y (Year Round), AA (Always Available)
+- [x] Course list displays semester label (S1/S2/Year/Always)
 - [ ] PM2 + OpenLiteSpeed proxy configured on server
 - [ ] First deploy
 
-## Next session: test Phase 2 end-to-end (create course → upload class list → student logs in), then deploy Phase 1+2 to server.
+## Next session: deploy Phase 1+2 to production server (SSH → PM2 + OLS proxy), then test live import.
