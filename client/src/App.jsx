@@ -35,7 +35,7 @@ export default function App() {
 
   if (isStudent) {
     return user?.role === 'student'
-      ? <StudentDashboard user={user} onLogout={() => setUser(null)} />
+      ? <StudentDashboard user={user} onLogout={() => setUser(null)} onUserUpdate={setUser} />
       : <StudentLogin onLogin={setUser} />;
   }
 

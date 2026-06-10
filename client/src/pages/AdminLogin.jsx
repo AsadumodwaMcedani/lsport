@@ -27,13 +27,7 @@ export default function AdminLogin({ onLogin }) {
 
         {/* brand */}
         <div style={s.brand}>
-          <div style={s.logoMark}>
-            <span style={s.logoL}>L</span>
-          </div>
-          <div>
-            <div style={s.logoText}><span style={s.logoOrange}>LS</span> PORT</div>
-            <div style={s.logoSub}>LBBS Lecturer Portal</div>
-          </div>
+          <img src="/lsport-white.png" alt="LS Port" style={s.logoImg} />
         </div>
 
         <div style={s.divider} />
@@ -86,7 +80,7 @@ export default function AdminLogin({ onLogin }) {
           </button>
         </form>
 
-        <p style={s.footer}>University of Fort Hare &mdash; Department of LBBS</p>
+        <p style={s.footer}>Private portal &mdash; contact your lecturer for access</p>
       </div>
     </div>
   );
@@ -152,40 +146,13 @@ const s = {
     maxWidth: 430,
   },
   brand: {
-    display: 'flex', alignItems: 'center', gap: 14,
+    display: 'flex', alignItems: 'center',
     marginBottom: 8,
   },
-  logoMark: {
-    width: 44, height: 44,
-    background: 'linear-gradient(135deg, #FA7921, #e06010)',
-    borderRadius: 12,
-    display: 'flex', alignItems: 'center', justifyContent: 'center',
-    boxShadow: '0 4px 14px rgba(250,121,33,0.45)',
-    flexShrink: 0,
-  },
-  logoL: {
-    color: '#fff',
-    fontFamily: "'Poppins', sans-serif",
-    fontWeight: 800,
-    fontSize: '1.3rem',
-    lineHeight: 1,
-  },
-  logoText: {
-    fontFamily: "'Poppins', sans-serif",
-    fontWeight: 800,
-    fontSize: '1.35rem',
-    color: '#1F2937',
-    lineHeight: 1.1,
-    letterSpacing: 0.5,
-  },
-  logoOrange: { color: '#FA7921' },
-  logoSub: {
-    fontSize: '0.72rem',
-    color: '#9ca3af',
-    letterSpacing: '0.06em',
-    textTransform: 'uppercase',
-    marginTop: 3,
-    fontWeight: 600,
+  logoImg: {
+    height: 48,
+    width: 'auto',
+    objectFit: 'contain',
   },
   divider: {
     height: 1, background: '#f0f0f0',

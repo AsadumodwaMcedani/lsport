@@ -30,11 +30,7 @@ export default function StudentLogin({ onLogin }) {
       <div style={s.bg} />
       <div style={{ ...s.card, opacity: mounted ? 1 : 0, transform: mounted ? 'none' : 'translateY(16px)', transition: 'opacity 0.4s ease, transform 0.4s ease' }}>
         <div style={s.brand}>
-          <div style={s.logoMark}><span style={s.logoL}>L</span></div>
-          <div>
-            <div style={s.logoText}><span style={s.logoOrange}>LS</span> PORT</div>
-            <div style={s.logoSub}>Student Portal</div>
-          </div>
+          <img src="/lsport-white.png" alt="LS Port" style={s.logoImg} />
         </div>
         <hr style={s.divider} />
         <h2 style={s.heading}>Student Sign In</h2>
@@ -67,8 +63,8 @@ export default function StudentLogin({ onLogin }) {
           </button>
         </form>
 
-        <p style={s.forgot}>Forgot your password? Contact your lecturer or tutor.</p>
-        <p style={s.footer}>University of Fort Hare &mdash; LBBS Department</p>
+        <p style={s.forgot}>Forgot password? Contact your lecturer.</p>
+        <p style={s.footer}>Private portal &mdash; contact your lecturer for access</p>
       </div>
     </div>
   );
@@ -87,12 +83,8 @@ const s = {
   page: { minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20, background: '#0f172a', position: 'relative', overflow: 'hidden' },
   bg:   { position: 'absolute', inset: 0, pointerEvents: 'none', background: 'radial-gradient(ellipse 55% 45% at 30% 25%, rgba(250,121,33,0.14) 0%, transparent 60%), radial-gradient(ellipse 45% 55% at 80% 80%, rgba(29,78,216,0.10) 0%, transparent 55%)' },
   card: { position: 'relative', zIndex: 1, background: '#fff', borderRadius: 20, boxShadow: '0 20px 80px rgba(0,0,0,0.4)', padding: '40px 44px', width: '100%', maxWidth: 440 },
-  brand:    { display: 'flex', alignItems: 'center', gap: 14 },
-  logoMark: { width: 42, height: 42, background: 'linear-gradient(135deg, #FA7921, #e06010)', borderRadius: 12, display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 4px 14px rgba(250,121,33,0.4)', flexShrink: 0 },
-  logoL:    { color: '#fff', fontFamily: "'Poppins',sans-serif", fontWeight: 800, fontSize: '1.25rem', lineHeight: 1 },
-  logoText: { fontFamily: "'Poppins',sans-serif", fontWeight: 800, fontSize: '1.3rem', color: '#1F2937', lineHeight: 1.1 },
-  logoOrange:{ color: '#FA7921' },
-  logoSub:  { fontSize: '0.7rem', color: '#9ca3af', textTransform: 'uppercase', letterSpacing: '0.06em', marginTop: 3, fontWeight: 600 },
+  brand:    { display: 'flex', alignItems: 'center' },
+  logoImg:  { height: 44, width: 'auto', objectFit: 'contain' },
   divider:  { border: 'none', borderTop: '1px solid #f0f0f0', margin: '22px 0 18px' },
   heading:  { fontFamily: "'Poppins',sans-serif", fontWeight: 700, fontSize: '1.3rem', color: '#1F2937', marginBottom: 4 },
   sub:      { color: '#9ca3af', fontSize: '0.86rem', margin: 0 },

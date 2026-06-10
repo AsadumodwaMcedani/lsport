@@ -102,6 +102,20 @@ router.post('/student/change-password', requireAuth, requireRole('student'), asy
   res.json({ ok: true, data: { changed: true } });
 });
 
+// Student compliance consent
+router.post('/student/consent', requireAuth, requireRole('student'), async (req, res) => {
+  const { terms_accepted, popia_accepted } = req.body || {};
+  if (!terms_accepted || !popia_accepted) return fail(res, 'CONSENT_REQUIRED', 'Both Terms and POPIA consent must be accepted');
+  await db('student_consents').insert({
+    student_id: req.user.sub,
+    terms_accepted: 1, popia_accepted: 1,
+    accepted_at: db.fn.now(),
+    ip_address: req.ip,
+  });
+  await logAudit(req.user.sub, 'student.consent_given', 'student', req.user.sub, null, req.ip);
+  res.json({ ok: true, data: { consented: true } });
+});
+
 router.post('/logout', (req, res) => { res.clearCookie('ls_token'); res.json({ ok: true, data: {} }); });
 
 router.get('/me', requireAuth, async (req, res) => {
@@ -111,7 +125,12 @@ router.get('/me', requireAuth, async (req, res) => {
   if (req.user.role === 'student') {
     const s = await db('students').where({ id: req.user.sub }).first();
     if (!s) return res.status(401).json({ ok: false, error: { code: 'UNAUTHENTICATED', message: 'Account not found' } });
-    return res.json({ ok: true, data: { role: 'student', name: `${s.names} ${s.surname}`, email: s.email, forcePasswordChange: !!s.force_pw_change } });
+    const consent = await db('student_consents').where({ student_id: s.id }).first();
+    const displayName = `${s.surname}, ${s.names}`;
+    return res.json({ ok: true, data: {
+      role: 'student', name: displayName, surname: s.surname, names: s.names,
+      email: s.email, forcePasswordChange: !!s.force_pw_change, hasConsented: !!consent,
+    }});
   }
   const u = await db('users').where({ id: req.user.sub }).first();
   if (!u) return res.status(401).json({ ok: false, error: { code: 'UNAUTHENTICATED', message: 'Account not found' } });

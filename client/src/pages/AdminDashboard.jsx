@@ -1,7 +1,8 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { api } from '../lib/api.js';
 import CoursesPage from './CoursesPage.jsx';
 import StudentsPage from './StudentsPage.jsx';
+import ProfilePage from './ProfilePage.jsx';
 
 const NAV = [
   { group: 'Overview',    items: [{ id: 'Dashboard', icon: <Grid /> }] },
@@ -20,6 +21,12 @@ const STATS = [
 
 export default function AdminDashboard({ user, onLogout }) {
   const [active, setActive] = useState('Dashboard');
+  const [clock, setClock]   = useState(timeStr());
+
+  useEffect(() => {
+    const t = setInterval(() => setClock(timeStr()), 1000);
+    return () => clearInterval(t);
+  }, []);
 
   async function logout() {
     await api('/auth/logout', { method: 'POST' });
@@ -31,11 +38,7 @@ export default function AdminDashboard({ user, onLogout }) {
       {/* ── sidebar ── */}
       <aside style={s.sidebar}>
         <div style={s.sideTop}>
-          <div style={s.logoMark}><span style={s.logoL}>L</span></div>
-          <div>
-            <div style={s.logoText}><span style={s.logoOrange}>LS</span> PORT</div>
-            <div style={s.logoSub}>Lecturer Portal</div>
-          </div>
+          <img src="/lsport-black.png" alt="LS Port" style={s.logoImg} />
         </div>
 
         <nav style={s.nav}>
@@ -73,7 +76,11 @@ export default function AdminDashboard({ user, onLogout }) {
             <div style={s.breadcrumb}>Home / {active}</div>
           </div>
           <div style={s.topRight}>
-            <div style={s.dateBadge}>{new Date().toLocaleDateString('en-ZA', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}</div>
+            <div style={s.dateBadge}>
+              {new Date().toLocaleDateString('en-ZA', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}
+              <span style={s.clockSep}>·</span>
+              <span style={s.clock}>{clock}</span>
+            </div>
           </div>
         </header>
 
@@ -82,7 +89,8 @@ export default function AdminDashboard({ user, onLogout }) {
           {active === 'Dashboard'  && <DashboardHome user={user} />}
           {active === 'Courses'    && <CoursesPage />}
           {active === 'Students'   && <StudentsPage />}
-          {active !== 'Dashboard' && active !== 'Courses' && active !== 'Students' && (
+          {active === 'Settings'   && <ProfilePage />}
+          {active !== 'Dashboard' && active !== 'Courses' && active !== 'Students' && active !== 'Settings' && (
             <div style={s.placeholder}>
               <div style={s.placeholderIcon}>{NAV.flatMap(g => g.items).find(i => i.id === active)?.icon}</div>
               <h3 style={{ color: '#6b7280', fontFamily: "'Poppins',sans-serif", margin: '12px 0 6px' }}>{active}</h3>
@@ -133,6 +141,10 @@ function DashboardHome({ user }) {
       </div>
     </div>
   );
+}
+
+function timeStr() {
+  return new Date().toLocaleTimeString('en-ZA', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false });
 }
 
 function greeting() {
@@ -189,16 +201,7 @@ const s = {
     borderBottom: '1px solid rgba(255,255,255,0.06)',
     flexShrink: 0,
   },
-  logoMark: {
-    width: 36, height: 36, borderRadius: 10, flexShrink: 0,
-    background: 'linear-gradient(135deg, #FA7921, #e06010)',
-    display: 'flex', alignItems: 'center', justifyContent: 'center',
-    boxShadow: '0 3px 10px rgba(250,121,33,0.4)',
-  },
-  logoL:    { color: '#fff', fontFamily: "'Poppins',sans-serif", fontWeight: 800, fontSize: '1.1rem', lineHeight: 1 },
-  logoText: { fontFamily: "'Poppins',sans-serif", fontWeight: 800, fontSize: '1.1rem', color: '#f1f5f9', letterSpacing: 0.5, lineHeight: 1.1 },
-  logoOrange: { color: '#FA7921' },
-  logoSub:  { fontSize: '0.65rem', color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.07em', marginTop: 2, fontWeight: 600 },
+  logoImg:  { height: 36, width: 'auto', objectFit: 'contain' },
 
   nav: { flex: 1, padding: '12px 12px 0', overflowY: 'auto' },
   navGroup: { marginBottom: 20 },
@@ -261,9 +264,12 @@ const s = {
   pageTitle: { fontSize: '1.2rem', fontWeight: 700, color: '#1F2937', fontFamily: "'Poppins',sans-serif", marginBottom: 2 },
   breadcrumb: { fontSize: '0.78rem', color: '#9ca3af' },
   topRight:  { display: 'flex', alignItems: 'center', gap: 12 },
+  clockSep: { margin: '0 6px', opacity: 0.4 },
+  clock:    { fontVariantNumeric: 'tabular-nums', fontWeight: 600, letterSpacing: '0.03em' },
   dateBadge: {
     background: '#f3f4f6', borderRadius: 20,
-    padding: '5px 12px', fontSize: '0.78rem', color: '#6b7280', fontWeight: 500,
+    padding: '5px 14px', fontSize: '0.78rem', color: '#6b7280', fontWeight: 500,
+    display: 'flex', alignItems: 'center',
   },
 
   content: { flex: 1, padding: '28px', overflowY: 'auto' },

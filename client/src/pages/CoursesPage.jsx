@@ -39,7 +39,7 @@ export default function CoursesPage() {
 /* ── Create Course Form ── */
 function CreateCourseForm({ onCreated, onCancel }) {
   const cur = new Date();
-  const [form, setForm] = useState({ code: '', name: '', year: cur.getFullYear(), semester_number: 1, description: '' });
+  const [form, setForm] = useState({ code: '', name: '', year: cur.getFullYear(), semester_number: 1, description: '', delivery_type: '', course_provider: 'lbbs', course_provider_other: '' });
   const [busy, setBusy] = useState(false);
   const [err, setErr]   = useState('');
   const set = k => e => setForm(f => ({ ...f, [k]: e.target.value }));
@@ -64,6 +64,27 @@ function CreateCourseForm({ onCreated, onCancel }) {
             <option value={2}>Semester 2</option>
           </select>
         </Field>
+        <Field label="Delivery Type">
+          <select style={s.input} value={form.delivery_type} onChange={set('delivery_type')}>
+            <option value="">— Not specified —</option>
+            <option value="year_round">Year Round</option>
+            <option value="online_always">Online (Always Available)</option>
+          </select>
+        </Field>
+        <Field label="Course Provider *">
+          <select style={s.input} value={form.course_provider} onChange={set('course_provider')} required>
+            <option value="lbbs">LBBS Course</option>
+            <option value="ufh">UFH Course</option>
+            <option value="other">Other</option>
+          </select>
+        </Field>
+        {form.course_provider === 'other' && (
+          <div style={{ gridColumn: '1/-1' }}>
+            <Field label="Specify Provider *">
+              <input style={s.input} value={form.course_provider_other} onChange={set('course_provider_other')} placeholder="Enter provider name" required />
+            </Field>
+          </div>
+        )}
         <div style={{ gridColumn: '1/-1' }}>
           <Field label="Description"><input style={s.input} value={form.description} onChange={set('description')} placeholder="Optional" /></Field>
         </div>
