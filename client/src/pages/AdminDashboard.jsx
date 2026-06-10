@@ -3,6 +3,7 @@ import { api } from '../lib/api.js';
 import CoursesPage from './CoursesPage.jsx';
 import StudentsPage from './StudentsPage.jsx';
 import ProfilePage from './ProfilePage.jsx';
+import QueriesPage from './QueriesPage.jsx';
 
 const NAV = [
   { group: 'Overview',    items: [{ id: 'Dashboard', icon: <Grid /> }] },
@@ -86,11 +87,12 @@ export default function AdminDashboard({ user, onLogout }) {
 
         {/* content */}
         <div style={s.content}>
-          {active === 'Dashboard'  && <DashboardHome user={user} />}
+          {active === 'Dashboard'  && <DashboardHome user={user} onNavigate={setActive} />}
           {active === 'Courses'    && <CoursesPage />}
           {active === 'Students'   && <StudentsPage />}
+          {active === 'Queries'    && <QueriesPage />}
           {active === 'Settings'   && <ProfilePage />}
-          {active !== 'Dashboard' && active !== 'Courses' && active !== 'Students' && active !== 'Settings' && (
+          {active !== 'Dashboard' && active !== 'Courses' && active !== 'Students' && active !== 'Queries' && active !== 'Settings' && (
             <div style={s.placeholder}>
               <div style={s.placeholderIcon}>{NAV.flatMap(g => g.items).find(i => i.id === active)?.icon}</div>
               <h3 style={{ color: '#6b7280', fontFamily: "'Poppins',sans-serif", margin: '12px 0 6px' }}>{active}</h3>
@@ -103,7 +105,13 @@ export default function AdminDashboard({ user, onLogout }) {
   );
 }
 
-function DashboardHome({ user }) {
+function DashboardHome({ user, onNavigate }) {
+  const [stats, setStats] = useState({ open: 0, new: 0 });
+
+  useEffect(() => {
+    api('/queries/stats').then(d => setStats(d)).catch(() => {});
+  }, []);
+
   return (
     <div style={{ animation: 'fadeUp 0.35s ease' }}>
       {/* welcome */}
@@ -121,23 +129,25 @@ function DashboardHome({ user }) {
 
       {/* stats */}
       <div style={s.statsGrid}>
-        {STATS.map(({ label, value, color, bg }) => (
-          <div key={label} style={{ ...s.statCard }}>
+        <div style={{ ...s.statCard, cursor: 'pointer' }} onClick={() => onNavigate('Queries')}>
+          <div style={{ ...s.statDot, background: '#3b82f6' }} />
+          <div style={s.statValue}>{stats.open}</div>
+          <div style={s.statLabel}>Open Queries</div>
+          {stats.new > 0 && <div style={{ fontSize: '0.75rem', color: '#b91c1c', marginBottom: 12, fontWeight: 600 }}>⬤ {stats.new} new</div>}
+          <div style={{ ...s.statAccent, background: '#eff6ff', borderTop: '3px solid #3b82f6' }} />
+        </div>
+        {[
+          { label: 'Students Enrolled', value: '—', color: '#22c55e', bg: '#f0fdf4' },
+          { label: 'Tasks Due Today',   value: '—', color: '#FA7921', bg: '#fff7ed' },
+          { label: 'Unread Notices',    value: '—', color: '#a855f7', bg: '#faf5ff' },
+        ].map(({ label, value, color, bg }) => (
+          <div key={label} style={s.statCard}>
             <div style={{ ...s.statDot, background: color }} />
             <div style={s.statValue}>{value}</div>
             <div style={s.statLabel}>{label}</div>
             <div style={{ ...s.statAccent, background: bg, borderTop: `3px solid ${color}` }} />
           </div>
         ))}
-      </div>
-
-      {/* notice */}
-      <div style={s.noticeCard}>
-        <div style={s.noticeIcon}><Info /></div>
-        <div>
-          <div style={{ fontWeight: 600, fontSize: '0.9rem', color: '#1d4ed8', marginBottom: 2 }}>Phase 1 in progress</div>
-          <div style={{ fontSize: '0.84rem', color: '#3b82f6' }}>Live data for queries, students, tasks, and activity will appear here from Phase 2 onwards.</div>
-        </div>
       </div>
     </div>
   );

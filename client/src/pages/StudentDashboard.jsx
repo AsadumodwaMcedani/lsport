@@ -1,14 +1,17 @@
 import React, { useState } from 'react';
 import { api } from '../lib/api.js';
+import StudentQueriesPage from './StudentQueriesPage.jsx';
 
 export default function StudentDashboard({ user, onLogout, onUserUpdate }) {
+  const [page, setPage] = useState('home');
   if (user.forcePasswordChange) return <ChangePassword user={user} onDone={onUserUpdate} />;
   if (!user.hasConsented)       return <ComplianceScreen user={user} onDone={onUserUpdate} />;
-  return <Dashboard user={user} onLogout={onLogout} />;
+  if (page === 'queries')       return <StudentQueriesPage user={user} onBack={() => setPage('home')} />;
+  return <Dashboard user={user} onLogout={onLogout} onNavigate={setPage} />;
 }
 
 /* ── Main dashboard ── */
-function Dashboard({ user, onLogout }) {
+function Dashboard({ user, onLogout, onNavigate }) {
   const displayName = user.name; // already "Surname, Names" from /me
 
   return (
@@ -33,7 +36,7 @@ function Dashboard({ user, onLogout }) {
         </div>
 
         <div style={s.grid}>
-          <Widget icon="💬" label="My Queries" value="—" sub="Submit or track your queries" color="#3b82f6" />
+          <Widget icon="💬" label="My Queries" value="—" sub="Submit or track your queries" color="#3b82f6" onClick={() => onNavigate('queries')} />
           <Widget icon="📢" label="Announcements" value="—" sub="Latest notices from your lecturer" color="#FA7921" />
         </div>
 
@@ -43,12 +46,7 @@ function Dashboard({ user, onLogout }) {
             <div style={s.actionTitle}>Submit a Query</div>
             <div style={s.actionSub}>Have a question about marks, submissions, or course content? Submit it here.</div>
           </div>
-          <button style={{ ...s.orangeBtn, opacity: 0.5, cursor: 'not-allowed' }} disabled title="Available from Phase 3">Submit Query</button>
-        </div>
-
-        <div style={s.noticeCard}>
-          <InfoIcon />
-          <span style={{ color: '#1d4ed8', fontSize: '0.84rem' }}>Full functionality (queries, announcements) is coming soon.</span>
+          <button style={s.orangeBtn} onClick={() => onNavigate('queries')}>Submit Query</button>
         </div>
       </main>
     </div>
@@ -151,9 +149,9 @@ function ComplianceScreen({ user, onDone }) {
 }
 
 /* ── Shared small components ── */
-function Widget({ icon, label, value, sub, color }) {
+function Widget({ icon, label, value, sub, color, onClick }) {
   return (
-    <div style={s.widget}>
+    <div style={{ ...s.widget, cursor: onClick ? 'pointer' : 'default' }} onClick={onClick}>
       <div style={{ ...s.widgetDot, background: color }} />
       <div style={s.widgetIcon}>{icon}</div>
       <div style={s.widgetValue}>{value}</div>
