@@ -1,6 +1,18 @@
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
+
 export default defineConfig({
   plugins: [react()],
-  server: { proxy: { '/api': 'http://localhost:3000' } }
+  server: {
+    proxy: {
+      '/api': {
+        target: 'http://localhost:3000',
+        changeOrigin: false,
+        secure: false,
+        configure: (proxy) => {
+          proxy.on('error', (err) => console.error('[proxy error]', err.message));
+        },
+      },
+    },
+  },
 });
