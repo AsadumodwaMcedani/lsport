@@ -3,7 +3,9 @@
     "allow": [
       "Bash(Get-ChildItem -Path \"C:\\\\Claude\\\\lsport\")",
       "Bash(Select-Object Name, PSIsContainer)",
-      "PowerShell(Get-ChildItem -Path \"C:\\\\Claude\\\\lsport\" -Recurse -Depth 3 | Where-Object { -not $_.PSIsContainer } | Select-Object FullName | Sort-Object FullName)"
+      "PowerShell(Get-ChildItem -Path \"C:\\\\Claude\\\\lsport\" -Recurse -Depth 3 | Where-Object { -not $_.PSIsContainer } | Select-Object FullName | Sort-Object FullName)",
+      "PowerShell(cd \"C:\\\\Claude\\\\lsport\\\\server\"; Start-Process powershell -ArgumentList \"-NoExit\", \"-Command\", \"cd 'C:\\\\Claude\\\\lsport\\\\server'; npm run dev\" -WindowStyle Normal; \"Backend starting in separate window on port 3000...\")",
+      "PowerShell(cd \"C:\\\\Claude\\\\lsport\\\\client\"; Start-Process powershell -ArgumentList \"-NoExit\", \"-Command\", \"cd 'C:\\\\Claude\\\\lsport\\\\client'; npm run dev\" -WindowStyle Normal; \"Frontend starting in separate window...\")"
     ]
   }
 }

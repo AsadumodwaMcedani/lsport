@@ -22,8 +22,11 @@
 - [x] JWT auth service + middleware (requireAuth, requireRole)
 - [x] Admin login route + rate limiting
 - [x] Staff login + forced password change flow
-- [ ] Admin dashboard shell (React)
+- [x] Git repo initialised, connected to GitHub (AsadumodwaMcedani/lsport), initial push done
+- [x] Local dev environment: MariaDB PATH set, server/.env created, migrations run, npm deps installed
+- [x] React admin login page — polished UI (branded card, SVG icons, fade-up animation, show/hide password)
+- [x] React admin dashboard shell — dark sidebar with grouped nav + SVG icons, stats cards, welcome banner
 - [ ] PM2 + OpenLiteSpeed proxy configured on server
 - [ ] First deploy
 
-## Next session: continue Phase 1 — build React admin shell (login page + dashboard layout), then deploy.
+## Next session: complete Phase 1 — configure PM2 + OpenLiteSpeed on server, do first deploy to work.lbbs.co.za.

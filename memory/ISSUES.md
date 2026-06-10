@@ -14,4 +14,5 @@
 - A-004: Class lists arrive as .xlsx with header row (spec §12.2).
 
 ## Resolved
-(move items here with date + resolution)
+- I-004: ✅ 2026-06-10 — GitHub repo created (AsadumodwaMcedani/lsport) and initial push completed.
+- I-005: ✅ 2026-06-10 — Node 18+ confirmed on local machine (v24.16.0). Server-side still to verify over SSH.

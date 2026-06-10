@@ -13,3 +13,5 @@
 | 9 | 2026-06-10 | No staging env; production-only manual deploy via deploy.sh, tags for rollback | Owner directive; mitigated by local testing + tagged releases | Prior recommendation |
 | 10 | 2026-06-10 | Single Express process serves both subdomains via Host-header routing; single Vite build with three entry surfaces (admin/student/tutor) routed client-side by hostname | Spec §2; one PM2 process to manage | — |
 | 11 | 2026-06-10 | Sensitive data deletion (POPIA) at 13 months via daily node-cron inside the app process (02:00 SAST), not system cron | Fewer moving parts; logged to audit_logs | — |
+| 12 | 2026-06-10 | Local dev uses MariaDB root user directly (no separate lbbs_user on dev machine) | Simpler local setup; lbbs_user still required on production server | — |
+| 13 | 2026-06-10 | Admin email for local dev set to mcedanila@gmail.com | Owner's personal email; production will use lecturer@ufh.ac.za | — |
