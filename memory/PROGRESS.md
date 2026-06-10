@@ -1,14 +1,14 @@
 # PROGRESS.md — single source of truth for project state
 
-## Current phase: 2 (Courses + Students) — IN PROGRESS
+## Current phase: 3 (Query System) — COMPLETE
 
 ## Phase status
 | Phase | Name | Status | Tag |
 |---|---|---|---|
 | 0 | Foundation files, repo, memory system | ✅ DONE | v1.0-phase0 |
 | 1 | Server skeleton, DB migrations (core), admin/staff auth | ✅ DONE | v1.0-phase1 |
-| 2 | Courses, class-list upload, student auth + OTP reset | 🔨 IN PROGRESS | — |
-| 3 | Query system (submit, thread, status, email) | ⬜ | — |
+| 2 | Courses, class-list upload, student auth + OTP reset | ✅ DONE | — |
+| 3 | Query system (submit, thread, status, email) | ✅ DONE | — |
 | 4 | Announcements + read receipts | ⬜ | — |
 | 5 | Tutor portal (accounts, queries, reports, complaints) | ⬜ | — |
 | 6 | Work diary (tasks, meetings, research, consulting, dept, supervision, staff, goals/diary) | ⬜ | — |
@@ -59,4 +59,20 @@
 - [ ] PM2 + OpenLiteSpeed proxy configured on server
 - [ ] First deploy
 
-## Next session: Phase 2 is feature-complete. Deploy to production (SSH → PM2 + OLS proxy + run migrations + smoke test).
+## Phase 3 — completed
+- [x] Migration 007: query_categories (seeded ×4), queries, query_messages, query_status_history, interaction_logs
+- [x] GET /queries/categories, GET /queries/stats, GET /queries (admin list + filters/search/pagination)
+- [x] GET /queries/:id (admin detail — student info, messages, status history, interaction log)
+- [x] POST /queries/:id/messages — public reply or private note, optional file attachment, emails student on public reply
+- [x] PATCH /queries/:id/status — status change with notes, logs history, emails student per Appendix A templates
+- [x] POST /queries/:id/interactions — log external interaction (channel, direction, summary)
+- [x] GET /queries/:id/file, GET /queries/:id/messages/:msgId/file — file download (auth checks)
+- [x] POST /queries/student — student submit (with attachment, channel, urgency, pre-filled profile)
+- [x] GET /queries/student, GET /queries/student/:id — student list + detail (public messages only)
+- [x] mail.js: sendQueryStatusEmail (4 templates per Appendix A), sendQueryReplyEmail
+- [x] Admin QueriesPage: filter bar, colour-coded table, query detail panel (thread, reply form, status control, interaction log)
+- [x] StudentQueriesPage: list, submit form (all fields), detail with status timeline
+- [x] AdminDashboard wired to QueriesPage; Open Queries stat shows live count (clickable)
+- [x] StudentDashboard wired to StudentQueriesPage via page state; Submit Query + My Queries buttons active
+
+## Next session: Phase 4 — Announcements (editor, targeting, pin/expiry, student read receipts).
