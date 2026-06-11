@@ -1,6 +1,6 @@
 # PROGRESS.md — single source of truth for project state
 
-## Current phase: 3 (Query System) — COMPLETE
+## Current phase: 4 (Announcements) — NOT STARTED
 
 ## Phase status
 | Phase | Name | Status | Tag |
@@ -56,8 +56,14 @@
 - [x] POST /auth/student/reset-request — 6-digit OTP, bcrypt-hashed, stored in password_otps, emailed to {studentnumber}@ufh.ac.za, 10-min expiry, rate-limited 3/15min
 - [x] POST /auth/student/reset-verify — validates OTP, resets password, marks OTP used
 - [x] StudentLogin.jsx: "Forgot password?" link opens 2-step reset flow (request → verify → done); semester label fix in course dropdown
-- [ ] PM2 + OpenLiteSpeed proxy configured on server
-- [ ] First deploy
+- [x] PM2 installed (~/.npm-global), app started, health check confirmed on :3000
+- [x] First deploy complete — 2026-06-10
+  - Node 18 at /opt/alt/alt-nodejs18/root/usr/bin/node (CloudLinux alt-nodejs)
+  - DB: lbbscoza_lsport_dbnm on 127.0.0.1 (not localhost — CloudLinux DNS quirk)
+  - All 7 migrations ran; client built; PM2 running
+  - OLS mod_proxy disabled on shared hosting; PHP reverse proxy (proxy.php + .htaccess) deployed to both subdomain document roots as workaround
+  - portal.lbbs.co.za and work.lbbs.co.za both confirmed live
+  - Webway support ticket recommended for proper OLS External App proxy (removes PHP layer)
 
 ## Phase 3 — completed
 - [x] Migration 007: query_categories (seeded ×4), queries, query_messages, query_status_history, interaction_logs
@@ -76,3 +82,13 @@
 - [x] StudentDashboard wired to StudentQueriesPage via page state; Submit Query + My Queries buttons active
 
 ## Next session: Phase 4 — Announcements (editor, targeting, pin/expiry, student read receipts).
+
+## Deployment — production (2026-06-10)
+- Host: zada120.webway.host | User: lbbscoza | DirectAdmin + CloudLinux + OLS
+- Node 18: /opt/alt/alt-nodejs18/root/usr/bin/node (add to PATH via .bashrc)
+- npm global: ~/.npm-global (npm config set prefix)
+- App: ~/lsport | PM2 config: ecosystem.config.cjs | Logs: ~/lsport/logs/
+- DB: 127.0.0.1, lbbscoza_lsport_dbnm, lbbscoza_lsport_dbusr
+- Uploads: ~/uploads | Backups: ~/backups
+- Proxy: PHP passthrough (proxy.php + .htaccess in each subdomain public_html)
+- To redeploy: cd ~/lsport && git pull origin main && cd server && npm ci && npx knex migrate:latest && cd ../client && npm run build && cd .. && pm2 reload lsport

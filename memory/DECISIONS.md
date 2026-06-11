@@ -18,3 +18,6 @@
 | 14 | 2026-06-10 | Import: only student_number required; all other columns optional | Real-world class lists often omit surname/names; blank fields insert as empty string | — |
 | 15 | 2026-06-10 | Semester stored as number (1–4) internally + label VARCHAR(5) for display; Y=3, AA=4 | Preserves UNIQUE constraint on (academic_year_id, semester_number); label drives UI | — |
 | 16 | 2026-06-10 | student_number VARCHAR(30), id_number VARCHAR(50) | Real student numbers and SA ID-adjacent values exceeded the original VARCHAR(20) | Migration 005 |
+| 17 | 2026-06-10 | Production DB_HOST=127.0.0.1 not localhost | CloudLinux shared hosting does not resolve 'localhost' via DNS; must use IP | Server config |
+| 18 | 2026-06-10 | PHP reverse proxy (proxy.php + .htaccess) as OLS workaround | OLS shared hosting has mod_proxy disabled; PHP proxy handles all methods including file uploads via CURLFile; replace with OLS External App when Webway configures it | I-006 |
+| 19 | 2026-06-10 | npm global prefix set to ~/.npm-global | CloudLinux shared hosting: no write access to /opt/alt/alt-nodejs18/root/usr/lib/node_modules | Server config |
