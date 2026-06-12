@@ -8,6 +8,7 @@ import courseRoutes from './routes/courses.js';
 import studentRoutes from './routes/students.js';
 import adminRoutes from './routes/admin.js';
 import queryRoutes from './routes/queries.js';
+import announcementRoutes from './routes/announcements.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -29,6 +30,7 @@ export function createApp() {
   app.use('/api/v1/students', studentRoutes);
   app.use('/api/v1/admin', adminRoutes);
   app.use('/api/v1/queries', queryRoutes);
+  app.use('/api/v1/announcements', announcementRoutes);
 
   const dist = path.resolve(__dirname, '../../client/dist');
   app.use(express.static(dist));

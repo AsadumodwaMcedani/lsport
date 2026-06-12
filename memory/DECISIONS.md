@@ -21,3 +21,5 @@
 | 17 | 2026-06-10 | Production DB_HOST=127.0.0.1 not localhost | CloudLinux shared hosting does not resolve 'localhost' via DNS; must use IP | Server config |
 | 18 | 2026-06-10 | PHP reverse proxy (proxy.php + .htaccess) as OLS workaround | OLS shared hosting has mod_proxy disabled; PHP proxy handles all methods including file uploads via CURLFile; replace with OLS External App when Webway configures it | I-006 |
 | 19 | 2026-06-10 | npm global prefix set to ~/.npm-global | CloudLinux shared hosting: no write access to /opt/alt/alt-nodejs18/root/usr/lib/node_modules | Server config |
+| 20 | 2026-06-12 | Announcements content = plain textarea + white-space:pre-wrap, not a rich text editor | Avoids external dependency; single-user admin app; plain text with newlines is sufficient | Spec §12.4 "rich text" |
+| 21 | 2026-06-12 | Student targeting by student numbers (comma/newline input) resolved to IDs server-side | Simpler UX than a student picker; admin knows student numbers from class lists | — |

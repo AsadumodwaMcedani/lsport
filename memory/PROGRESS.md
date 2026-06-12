@@ -1,6 +1,6 @@
 # PROGRESS.md — single source of truth for project state
 
-## Current phase: 4 (Announcements) — NOT STARTED
+## Current phase: 4 (Announcements) — COMPLETE
 
 ## Phase status
 | Phase | Name | Status | Tag |
@@ -9,7 +9,7 @@
 | 1 | Server skeleton, DB migrations (core), admin/staff auth | ✅ DONE | v1.0-phase1 |
 | 2 | Courses, class-list upload, student auth + OTP reset | ✅ DONE | — |
 | 3 | Query system (submit, thread, status, email) | ✅ DONE | — |
-| 4 | Announcements + read receipts | ⬜ | — |
+| 4 | Announcements + read receipts | ✅ DONE | — |
 | 5 | Tutor portal (accounts, queries, reports, complaints) | ⬜ | — |
 | 6 | Work diary (tasks, meetings, research, consulting, dept, supervision, staff, goals/diary) | ⬜ | — |
 | 7 | Lab mgmt + vehicle hire PDF | ⬜ | — |
@@ -81,7 +81,22 @@
 - [x] AdminDashboard wired to QueriesPage; Open Queries stat shows live count (clickable)
 - [x] StudentDashboard wired to StudentQueriesPage via page state; Submit Query + My Queries buttons active
 
-## Next session: Phase 4 — Announcements (editor, targeting, pin/expiry, student read receipts).
+## Phase 4 — completed
+- [x] Migration 008: announcements, announcement_targets, announcement_read_receipts
+- [x] GET /announcements — admin list with read_count + target_summary
+- [x] GET /announcements/:id — admin detail with targets + receipts list
+- [x] POST /announcements — create with all/course/student targeting, pin, expiry
+- [x] PATCH /announcements/:id — update title/content/pin/expiry
+- [x] DELETE /announcements/:id — delete with cascade
+- [x] GET /announcements/:id/receipts.csv — CSV download of read receipts
+- [x] GET /announcements/student — student: all visible announcements with is_read flag
+- [x] POST /announcements/:id/read — student: mark as read (upsert, idempotent)
+- [x] AnnouncementsPage.jsx — admin list + create form (course multi-select, student numbers textarea) + detail panel with read receipts sidebar + CSV download
+- [x] StudentAnnouncementsPage.jsx — list (pinned first, unread dot, green tick), modal with "I have read and understood this" confirmation
+- [x] AdminDashboard wired to AnnouncementsPage
+- [x] StudentDashboard: announcements widget shows live unread count, navigates to StudentAnnouncementsPage
+
+## Next session: Phase 5 — Tutor portal (accounts, course assignment, login, dashboard, query replies, session reports, student complaint form, admin complaint inbox).
 
 ## Deployment — production (2026-06-10)
 - Host: zada120.webway.host | User: lbbscoza | DirectAdmin + CloudLinux + OLS

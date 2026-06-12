@@ -4,6 +4,7 @@ import CoursesPage from './CoursesPage.jsx';
 import StudentsPage from './StudentsPage.jsx';
 import ProfilePage from './ProfilePage.jsx';
 import QueriesPage from './QueriesPage.jsx';
+import AnnouncementsPage from './AnnouncementsPage.jsx';
 
 const NAV = [
   { group: 'Overview',    items: [{ id: 'Dashboard', icon: <Grid /> }] },
@@ -90,9 +91,10 @@ export default function AdminDashboard({ user, onLogout }) {
           {active === 'Dashboard'  && <DashboardHome user={user} onNavigate={setActive} />}
           {active === 'Courses'    && <CoursesPage />}
           {active === 'Students'   && <StudentsPage />}
-          {active === 'Queries'    && <QueriesPage />}
-          {active === 'Settings'   && <ProfilePage />}
-          {active !== 'Dashboard' && active !== 'Courses' && active !== 'Students' && active !== 'Queries' && active !== 'Settings' && (
+          {active === 'Queries'       && <QueriesPage />}
+          {active === 'Announcements' && <AnnouncementsPage />}
+          {active === 'Settings'      && <ProfilePage />}
+          {active !== 'Dashboard' && active !== 'Courses' && active !== 'Students' && active !== 'Queries' && active !== 'Announcements' && active !== 'Settings' && (
             <div style={s.placeholder}>
               <div style={s.placeholderIcon}>{NAV.flatMap(g => g.items).find(i => i.id === active)?.icon}</div>
               <h3 style={{ color: '#6b7280', fontFamily: "'Poppins',sans-serif", margin: '12px 0 6px' }}>{active}</h3>

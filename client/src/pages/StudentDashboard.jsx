@@ -1,18 +1,24 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { api } from '../lib/api.js';
 import StudentQueriesPage from './StudentQueriesPage.jsx';
+import StudentAnnouncementsPage from './StudentAnnouncementsPage.jsx';
 
 export default function StudentDashboard({ user, onLogout, onUserUpdate }) {
   const [page, setPage] = useState('home');
   if (user.forcePasswordChange) return <ChangePassword user={user} onDone={onUserUpdate} />;
   if (!user.hasConsented)       return <ComplianceScreen user={user} onDone={onUserUpdate} />;
   if (page === 'queries')       return <StudentQueriesPage user={user} onBack={() => setPage('home')} />;
+  if (page === 'announcements') return <StudentAnnouncementsPage user={user} onBack={() => setPage('home')} />;
   return <Dashboard user={user} onLogout={onLogout} onNavigate={setPage} />;
 }
 
 /* ── Main dashboard ── */
 function Dashboard({ user, onLogout, onNavigate }) {
-  const displayName = user.name; // already "Surname, Names" from /me
+  const displayName = user.name;
+  const [unreadCount, setUnreadCount] = useState(0);
+  useEffect(() => {
+    api('/announcements/student').then(d => setUnreadCount(d.filter(a => !a.is_read).length)).catch(() => {});
+  }, []);
 
   return (
     <div style={s.page}>
@@ -37,7 +43,7 @@ function Dashboard({ user, onLogout, onNavigate }) {
 
         <div style={s.grid}>
           <Widget icon="💬" label="My Queries" value="—" sub="Submit or track your queries" color="#3b82f6" onClick={() => onNavigate('queries')} />
-          <Widget icon="📢" label="Announcements" value="—" sub="Latest notices from your lecturer" color="#FA7921" />
+          <Widget icon="📢" label="Announcements" value={unreadCount > 0 ? unreadCount : '✓'} sub={unreadCount > 0 ? `${unreadCount} unread notice${unreadCount > 1 ? 's' : ''}` : 'All caught up'} color="#FA7921" onClick={() => onNavigate('announcements')} />
         </div>
 
         <div style={s.actionCard}>
